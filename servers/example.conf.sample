@@ -1,0 +1,71 @@
+server {
+  server_name  .example.com;
+  access_log   off;
+  expires      max;
+  return       301  https://example.com$request_uri;
+}
+
+server {
+  listen       443  http2  ssl;
+  server_name  www.example.com;
+  access_log   off;
+
+  include      enable/ssl.conf;
+
+  ssl_certificate      ssl/example/fullchain.pem;
+  ssl_certificate_key  ssl/example/key.pem;
+
+  return  301  https://example.com$request_uri;
+}
+
+server {
+  listen       443  http2  ssl;
+  server_name  .example.com;
+
+  include      enable/acme.conf;
+  include      enable/ssl.conf;
+
+  ssl_certificate      ssl/example/fullchain.pem;
+  ssl_certificate_key  ssl/example/key.pem;
+
+  add_header  Content-Security-Policy  "block-all-mixed-content";
+
+  access_log  off;
+  error_log   /home/web/example/log/nginx.error.log;
+
+  # Yandex Webvisor
+  set  $frame_options  '';
+  if ($http_referer !~ '^https?:\/\/([^\/]+\.)?(example\.com|webvisor\.com)\/'){
+    set  $frame_options  'SAMEORIGIN';
+  }
+  add_header  X-Frame-Options  $frame_options;
+  # /Yandex Webvisor
+
+  set   $root  /home/web/example;
+  set   $src   $root/src;
+
+  root  $src;
+
+  location ~ ^/(media|static) {}
+
+  set  $favicon  $src/static/img/favicon;
+
+  location  ~  ^/(apple-touch-icon\.png|browserconfig\.xml|safari-pinned-tab\.svg|site\.webmanifest)$ {
+    root  $favicon;
+  }
+
+  location  ~  ^/(android-chrome|favicon|mstile)(.*)\.(ico|png)$ {
+    root  $favicon;
+  }
+
+  location  ~*  ^/(?!sitemap\.xml)[-\w]+\.(txt|xml|html)$ {
+    root  $src/media/uploads/seo;
+  }
+
+  location / {
+    include             params/uwsgi.conf;
+
+    uwsgi_pass          unix://$root/run/uwsgi.sock;
+    uwsgi_read_timeout  300;
+  }
+}
