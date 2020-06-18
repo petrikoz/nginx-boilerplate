@@ -1,0 +1,5 @@
+servers/*
+!servers/default.conf
+!servers/example.conf.sample
+ssl/*
+!ssl/README.md
