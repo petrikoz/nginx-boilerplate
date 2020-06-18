@@ -6,7 +6,7 @@ server {
 }
 
 server {
-  listen       443  http2  ssl;
+  listen       443  http2 ssl;
   server_name  www.example.com;
   access_log   off;
 
@@ -19,7 +19,7 @@ server {
 }
 
 server {
-  listen       443  http2  ssl;
+  listen       443  http2 ssl  default_server;
   server_name  .example.com;
 
   include      enable/acme.conf;
@@ -61,6 +61,14 @@ server {
   location  ~*  ^/(?!sitemap\.xml)[-\w]+\.(txt|xml|html)$ {
     root  $src/media/uploads/seo;
   }
+
+  # uncomment bellow for websockets
+  #location /ws/ {
+  #  proxy_pass http://unix:$root/run/uwsgi-ws.sock;
+  #  proxy_http_version 1.1;
+  #  proxy_set_header Upgrade $http_upgrade;
+  #  proxy_set_header Connection "upgrade";
+  #}
 
   location / {
     include             params/uwsgi.conf;
